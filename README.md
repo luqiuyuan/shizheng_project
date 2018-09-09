@@ -16,7 +16,7 @@ Run the program as ```<program name> <input filename> <output filename> <number 
 For example,
 
 ```
-./main bus_cif.yuv bus_cif.mp4 300 352 288 4
+./main bus_cif.yuv bus_cif.mp4 150 352 288 4
 ```
 
 # Notes
