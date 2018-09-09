@@ -6,18 +6,13 @@
 using namespace std;
 
 byte          **Src_Y, **Src_U, **Src_V,
-			  **Sub1_Y,**Sub1_U,**Sub1_V,
-			  **Sub2_Y,**Sub2_U,**Sub2_V,
-              **Sub3_Y,**Sub3_U,**Sub3_V,
-              **Dif_Sub3_Y,**Dif_Sub3_U,**Dif_Sub3_V,
-			  **Sub4_Y,**Sub4_U,**Sub4_V,
-              **Dif_Sub4_Y,**Dif_Sub4_U,**Dif_Sub4_V;
+			  **Sub_Y,**Sub_U,**Sub_V;
 byte          *buffer;
 
-double Initializing(int width, int height);
-void finishing(int width, int height);
+double Initializing(int width, int height, int downsampling_factor);
+void finishing(int width, int height, int downsampling_factor);
 
-void downsample(string input_filename, string output_filename, int number_of_frames, int width, int height) {
+void downsample(string input_filename, string output_filename, int number_of_frames, int width, int height, int downsampling_factor) {
   FILE *infile, *outfile;
 
   if ((infile=fopen(input_filename.c_str(),"rb"))==NULL)//@"rb" Open a binary file for reading  
@@ -33,7 +28,7 @@ void downsample(string input_filename, string output_filename, int number_of_fra
 		exit(-1);
 	}
 
-  Initializing(width, height);
+  Initializing(width, height, downsampling_factor);
 
   int i,j,k,ii,jj,iii,jjj,half_width=width/2;
 
@@ -49,18 +44,14 @@ void downsample(string input_filename, string output_filename, int number_of_fra
 
 		for(i=0;i<height;i++)
 		{   for(j=0;j<width;j++)
-			{   ii=i/2;jj=j/2;iii=i%2;jjj=j%2;
-				if(iii==0&&jjj==0)                Sub1_Y[ii][jj]=Src_Y[i][j]; 
-				else if(iii==0&&jjj!=0)           Sub2_Y[ii][jj]=Src_Y[i][j];
-					 else if(iii!=0&&jjj==0)      Sub3_Y[ii][jj]=Src_Y[i][j];
-						  else if(iii!=0&&jjj!=0) Sub4_Y[ii][jj]=Src_Y[i][j];
+			{   ii=i/downsampling_factor;jj=j/downsampling_factor;iii=i%downsampling_factor;jjj=j%downsampling_factor;
+				if(iii==0&&jjj==0)                Sub_Y[ii][jj]=Src_Y[i][j];
 			}
 		}
 		
 		//int fseek( FILE *stream, long offset, int origin );
 		fread(buffer, sizeof(unsigned char),(width*height/4), infile);//����һ֡Uͼ��
 		//position = ftell(infile);
-		half_width=width/2;
 		
 		for(i=0;i<(height/2);i++)
 		{   for(j=0;j<(width/2);j++)
@@ -69,11 +60,8 @@ void downsample(string input_filename, string output_filename, int number_of_fra
 		
 		for(i=0;i<(height/2);i++)
 		{   for(j=0;j<(width/2);j++)
-			{   ii=i/2;jj=j/2;iii=i%2;jjj=j%2;
-				if(iii==0&&jjj==0)                Sub1_U[ii][jj]=Src_U[i][j]; 
-				else if(iii==0&&jjj!=0)           Sub2_U[ii][jj]=Src_U[i][j];
-					 else if(iii!=0&&jjj==0)      Sub3_U[ii][jj]=Src_U[i][j];
-						  else if(iii!=0&&jjj!=0) Sub4_U[ii][jj]=Src_U[i][j];
+			{   ii=i/downsampling_factor;jj=j/downsampling_factor;iii=i%downsampling_factor;jjj=j%downsampling_factor;
+				if(iii==0&&jjj==0)                Sub_U[ii][jj]=Src_U[i][j];
 			}
 		}
 
@@ -86,94 +74,54 @@ void downsample(string input_filename, string output_filename, int number_of_fra
 		
 		for(i=0;i<(height/2);i++)
 		{   for(j=0;j<(width/2);j++)
-			{   ii=i/2;jj=j/2;iii=i%2;jjj=j%2;
-				if(iii==0&&jjj==0)                Sub1_V[ii][jj]=Src_V[i][j]; 
-				else if(iii==0&&jjj!=0)           Sub2_V[ii][jj]=Src_V[i][j];
-					 else if(iii!=0&&jjj==0)      Sub3_V[ii][jj]=Src_V[i][j];
-						  else if(iii!=0&&jjj!=0) Sub4_V[ii][jj]=Src_V[i][j];
+			{   ii=i/downsampling_factor;jj=j/downsampling_factor;iii=i%downsampling_factor;jjj=j%downsampling_factor;
+				if(iii==0&&jjj==0)                Sub_V[ii][jj]=Src_V[i][j];
 			}
 		}
 		/*-----------------------------------------------------------------------------*/
         /*-------------------------------������֡д���ļ�------------------------------*/	
-		for(i=0;i<(height/2);i++) 
-		{	fwrite(Sub1_Y[i],sizeof(unsigned char),width/2,outfile);
+		for(i=0;i<(height/downsampling_factor);i++) 
+		{	fwrite(Sub_Y[i],sizeof(unsigned char),width/downsampling_factor,outfile);
 		}
     
 
-		for(i=0;i<(height/4);i++) 
-		{	fwrite(Sub1_U[i],sizeof(unsigned char),width/4,outfile);
+		for(i=0;i<(height/(downsampling_factor*2));i++) 
+		{	fwrite(Sub_U[i],sizeof(unsigned char),width/(downsampling_factor*2),outfile);
 		}
 
 
-		for(i=0;i<0.25*height;i++)
-		{	fwrite(Sub1_V[i],sizeof(unsigned char),width/4,outfile);
+		for(i=0;i<height/(downsampling_factor*2);i++)
+		{	fwrite(Sub_V[i],sizeof(unsigned char),width/(downsampling_factor*2),outfile);
 		}
   }
 
-  finishing(width, height);
+  finishing(width, height, downsampling_factor);
 	fclose(infile);
 	fclose(outfile);
 }
 
 /*--------------------------------------------------------------------------------*/
-double Initializing(int width, int height)
+double Initializing(int width, int height, int downsampling_factor)
 	{	int k;
 		buffer=new unsigned char [width*height];
 
 	    Src_Y=new unsigned char *[height];
 		for(k=0;k<height;k++)     Src_Y[k]=new unsigned char[width];
 		Src_U=new unsigned char *[height/2];
-		for(k=0;k<0.5*height;k++) Src_U[k]=new unsigned char[width/2];
+		for(k=0;k<height/2;k++) Src_U[k]=new unsigned char[width/2];
 		Src_V=new unsigned char *[height/2];
-		for(k=0;k<0.5*height;k++) Src_V[k]=new unsigned char[width/2];
+		for(k=0;k<height/2;k++) Src_V[k]=new unsigned char[width/2];
 
-		Sub1_Y=new unsigned char *[height/2];
-		for(k=0;k<0.5*height;k++)     Sub1_Y[k]=new unsigned char[width/2];
-		Sub1_U=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Sub1_U[k]=new unsigned char[width/4];
-		Sub1_V=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Sub1_V[k]=new unsigned char[width/4];
-
-		Sub2_Y=new unsigned char *[height/2];
-		for(k=0;k<0.5*height;k++)     Sub2_Y[k]=new unsigned char[width/2];
-		Sub2_U=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Sub2_U[k]=new unsigned char[width/4];
-		Sub2_V=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Sub2_V[k]=new unsigned char[width/4];
-
-		Dif_Sub3_Y=new unsigned char *[height/2];
-		for(k=0;k<0.5*height;k++)     Dif_Sub3_Y[k]=new unsigned char[width/2];
-		Dif_Sub3_U=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Dif_Sub3_U[k]=new unsigned char[width/4];
-		Dif_Sub3_V=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Dif_Sub3_V[k]=new unsigned char[width/4];
-
-		Dif_Sub4_Y=new unsigned char *[height/2];
-		for(k=0;k<0.5*height;k++)     Dif_Sub4_Y[k]=new unsigned char[width/2];
-		Dif_Sub4_U=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Dif_Sub4_U[k]=new unsigned char[width/4];
-		Dif_Sub4_V=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Dif_Sub4_V[k]=new unsigned char[width/4];
-
-
-        Sub3_Y=new unsigned char *[height/2];
-		for(k=0;k<0.5*height;k++)     Sub3_Y[k]=new unsigned char[width/2];
-		Sub3_U=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Sub3_U[k]=new unsigned char[width/4];
-		Sub3_V=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Sub3_V[k]=new unsigned char[width/4];
-
-
-		Sub4_Y=new unsigned char *[height/2];
-		for(k=0;k<0.5*height;k++)     Sub4_Y[k]=new unsigned char[width/2];
-		Sub4_U=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Sub4_U[k]=new unsigned char[width/4];
-		Sub4_V=new unsigned char *[height/4];
-		for(k=0;k<0.5*0.5*height;k++) Sub4_V[k]=new unsigned char[width/4];
+		Sub_Y=new unsigned char *[height/downsampling_factor];
+		for(k=0;k<height/downsampling_factor;k++)     Sub_Y[k]=new unsigned char[width/downsampling_factor];
+		Sub_U=new unsigned char *[height/(downsampling_factor*2)];
+		for(k=0;k<height/(downsampling_factor*2);k++) Sub_U[k]=new unsigned char[width/(downsampling_factor*2)];
+		Sub_V=new unsigned char *[height/(downsampling_factor*2)];
+		for(k=0;k<height/(downsampling_factor*2);k++) Sub_V[k]=new unsigned char[width/(downsampling_factor*2)];
 		return 0;
 	}
 /*--------------------------------------------------------------------------------*/
-void finishing(int width, int height)
+void finishing(int width, int height, int downsampling_factor)
 {
 	int i;
 
@@ -185,47 +133,10 @@ void finishing(int width, int height)
 	for ( i = 0; i < height/2; i++) delete [] Src_V[i];
 	delete [] Src_V;
 	
-	for ( i = 0; i < height/2; i++) delete [] Sub1_Y[i];
-	delete [] Sub1_Y;
-	for ( i = 0; i < height/4; i++) delete [] Sub1_U[i];
-	delete [] Sub1_U;
-	for ( i = 0; i < height/4; i++) delete [] Sub1_V[i];
-	delete [] Sub1_V;
-
-	for ( i = 0; i < height/2; i++) delete [] Sub2_Y[i];
-	delete [] Sub2_Y;
-	for ( i = 0; i < height/4; i++) delete [] Sub2_U[i];
-	delete [] Sub2_U;
-	for ( i = 0; i < height/4; i++) delete [] Sub2_V[i];
-	delete [] Sub2_V;
-
-	
-	for ( i = 0; i < height/2; i++) delete [] Sub3_Y[i];
-	delete [] Sub3_Y;
-	for ( i = 0; i < height/4; i++) delete [] Sub3_U[i];
-	delete [] Sub3_U;
-	for ( i = 0; i < height/4; i++) delete [] Sub3_V[i];
-	delete [] Sub3_V;
-
-	for ( i = 0; i < height/2; i++) delete [] Sub4_Y[i];
-	delete [] Sub4_Y;
-	for ( i = 0; i < height/4; i++) delete [] Sub4_U[i];
-	delete [] Sub4_U;
-	for ( i = 0; i < height/4; i++) delete [] Sub4_V[i];
-	delete [] Sub4_V;
-
-
-	for ( i = 0; i < height/2; i++) delete [] Dif_Sub3_Y[i];
-	delete [] Dif_Sub3_Y;
-	for ( i = 0; i < height/4; i++) delete [] Dif_Sub3_U[i];
-	delete [] Dif_Sub3_U;
-	for ( i = 0; i < height/4; i++) delete [] Dif_Sub3_V[i];
-	delete [] Dif_Sub3_V;
-
-	for ( i = 0; i < height/2; i++) delete [] Dif_Sub4_Y[i];
-	delete [] Dif_Sub4_Y;
-	for ( i = 0; i < height/4; i++) delete [] Dif_Sub4_U[i];
-	delete [] Dif_Sub4_U;
-	for ( i = 0; i < height/4; i++) delete [] Dif_Sub4_V[i];
-	delete [] Dif_Sub4_V;
+	for ( i = 0; i < height/downsampling_factor; i++) delete [] Sub_Y[i];
+	delete [] Sub_Y;
+	for ( i = 0; i < height/(downsampling_factor*2); i++) delete [] Sub_U[i];
+	delete [] Sub_U;
+	for ( i = 0; i < height/(downsampling_factor*2); i++) delete [] Sub_V[i];
+	delete [] Sub_V;
 }
