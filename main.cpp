@@ -23,7 +23,9 @@ int main(int argc, char *argv[]) {
   if (HEIGHT == 0) { cout << "height is invalid" << endl; return 1; }
   if (DOWNSAMPLING_FACTOR == 0) { cout << "downsampling factor is invalid" << endl; return 1; }
 
-  downsample(input_filename, output_filename, NUMBER_OF_FRAMES, WIDTH, HEIGHT);
+  downsample(input_filename, "middle.yuv", NUMBER_OF_FRAMES, WIDTH, HEIGHT);
+
+  system(("ffmpeg -f rawvideo -vcodec rawvideo -s " + to_string(WIDTH / DOWNSAMPLING_FACTOR) + "x" + to_string(HEIGHT / DOWNSAMPLING_FACTOR) + " -r 25 -pix_fmt yuv420p -i middle.yuv -c:v libx265 -an -x265-params crf=25 " + output_filename).c_str());
 
   return 0;
 }
