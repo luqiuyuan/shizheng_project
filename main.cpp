@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
   downsample(input_filename, "middle.yuv", NUMBER_OF_FRAMES, WIDTH, HEIGHT);
 
-  system(("ffmpeg -f rawvideo -vcodec rawvideo -s " + to_string(WIDTH / DOWNSAMPLING_FACTOR) + "x" + to_string(HEIGHT / DOWNSAMPLING_FACTOR) + " -r 25 -pix_fmt yuv420p -i middle.yuv -c:v libx265 -an -x265-params crf=25 " + output_filename).c_str());
+  system(("ffmpeg -y -f rawvideo -vcodec rawvideo -s " + to_string(WIDTH / DOWNSAMPLING_FACTOR) + "x" + to_string(HEIGHT / DOWNSAMPLING_FACTOR) + " -r 25 -pix_fmt yuv420p -i middle.yuv -c:v libx265 -an -x265-params crf=25 " + output_filename).c_str());
 
   return 0;
 }
